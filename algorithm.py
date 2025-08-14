@@ -8,7 +8,7 @@ def main():
     
     # Read input data (the dataset)
     try:
-        with open('dataset.txt', 'r') as f:
+        with open('/data/inputs/dataset.txt', 'r') as f:
             data = f.read().strip()
         
         print(f"Input data: {data}")
