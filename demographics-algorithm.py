@@ -12,7 +12,7 @@ def analyze_voting_demographics():
     try:
         # Read the dataset
         print("Reading demographic data...")
-        data = pd.read_csv('/data/input/demographics-dataset.csv')
+        data = pd.read_csv('/data/inputs/demographics-dataset.csv')
         
         # Convert Age to numeric, handling any potential issues
         data['Age'] = pd.to_numeric(data['Age'], errors='coerce')
