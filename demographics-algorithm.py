@@ -26,7 +26,8 @@ def analyze_demographics():
         print(f"Total individuals in dataset: {len(data)}")
         
         if len(data) == 0:
-            return "Error: No valid data found in the dataset"
+            print("Error: No valid data found in the dataset")
+            return
         
         # Count individuals in each age group
         children = 0      # 0-12
@@ -84,7 +85,11 @@ def analyze_demographics():
             f.write(json.dumps(result, indent=2))
         
         print("Analysis completed successfully!")
-        return json.dumps(result, indent=2)
+        
+        # PRINT the JSON result - this is what gets captured
+        print("\n=== DEMOGRAPHICS ANALYSIS RESULT ===")
+        print(json.dumps(result, indent=2))
+        print("=== END RESULT ===")
         
     except Exception as e:
         error_msg = f"Error during analysis: {str(e)}"
@@ -93,8 +98,6 @@ def analyze_demographics():
         # Save error report
         with open('/data/outputs/error.txt', 'w') as f:
             f.write(error_msg)
-        
-        return error_msg
 
 if __name__ == "__main__":
     analyze_demographics()
