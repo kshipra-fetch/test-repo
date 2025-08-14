@@ -1,5 +1,4 @@
-import pandas as pd
-import numpy as np
+import csv
 from datetime import datetime
 
 def analyze_voting_demographics():
@@ -12,15 +11,25 @@ def analyze_voting_demographics():
     try:
         # Read the dataset
         print("Reading demographic data...")
-        data = pd.read_csv('/data/inputs/demographics-data.csv')
         
-        # Convert Age to numeric, handling any potential issues
-        data['Age'] = pd.to_numeric(data['Age'], errors='coerce')
-        
-        # Remove any rows with invalid ages
-        data = data.dropna(subset=['Age'])
+        data = []
+        with open('/data/inputs/demographics-data.csv', 'r') as file:
+            csv_reader = csv.DictReader(file)
+            for row in csv_reader:
+                try:
+                    age = int(row['Age'])
+                    data.append({
+                        'Name': row['Name'],
+                        'Age': age,
+                        'City': row['City']
+                    })
+                except (ValueError, KeyError):
+                    continue  # Skip invalid rows
         
         print(f"Total individuals in dataset: {len(data)}")
+        
+        if len(data) == 0:
+            return "Error: No valid data found in the dataset"
         
         # Define age groups based on UK voting laws
         def categorize_voting_status(age):
@@ -31,27 +40,36 @@ def analyze_voting_demographics():
             else:
                 return "Soon Eligible (16-17)"
         
-        # Add voting status category
-        data['Voting_Status'] = data['Age'].apply(categorize_voting_status)
+        # Categorize voting status
+        for person in data:
+            person['Voting_Status'] = categorize_voting_status(person['Age'])
         
         # Count individuals in each category
-        voting_counts = data['Voting_Status'].value_counts()
+        voting_counts = {}
+        for person in data:
+            status = person['Voting_Status']
+            voting_counts[status] = voting_counts.get(status, 0) + 1
         
         # Calculate percentages
         total_individuals = len(data)
-        voting_percentages = (voting_counts / total_individuals * 100).round(2)
+        voting_percentages = {}
+        for status, count in voting_counts.items():
+            voting_percentages[status] = round((count / total_individuals) * 100, 2)
         
-        # Get age distribution details
-        age_stats = {
-            'Average Age': round(data['Age'].mean(), 2),
-            'Median Age': round(data['Age'].median(), 2),
-            'Youngest': int(data['Age'].min()),
-            'Oldest': int(data['Age'].max()),
-            'Age Range': int(data['Age'].max() - data['Age'].min())
-        }
+        # Get age statistics
+        ages = [person['Age'] for person in data]
+        avg_age = sum(ages) / len(ages)
+        min_age = min(ages)
+        max_age = max(ages)
         
         # City-wise analysis
-        city_counts = data['City'].value_counts().head(10)
+        city_counts = {}
+        for person in data:
+            city = person['City']
+            city_counts[city] = city_counts.get(city, 0) + 1
+        
+        # Sort cities by count
+        sorted_cities = sorted(city_counts.items(), key=lambda x: x[1], reverse=True)[:10]
         
         # Generate detailed report
         report = f"""
@@ -62,7 +80,7 @@ Analysis Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 DATASET OVERVIEW:
 ----------------
 Total Individuals: {total_individuals}
-Cities Represented: {data['City'].nunique()}
+Cities Represented: {len(city_counts)}
 
 VOTING ELIGIBILITY BREAKDOWN:
 ----------------------------
@@ -75,17 +93,16 @@ VOTING ELIGIBILITY BREAKDOWN:
         report += f"""
 AGE STATISTICS:
 --------------
-Average Age: {age_stats['Average Age']} years
-Median Age: {age_stats['Median Age']} years
-Youngest Individual: {age_stats['Youngest']} years
-Oldest Individual: {age_stats['Oldest']} years
-Age Range: {age_stats['Age Range']} years
+Average Age: {round(avg_age, 2)} years
+Youngest Individual: {min_age} years
+Oldest Individual: {max_age} years
+Age Range: {max_age - min_age} years
 
 TOP 10 CITIES BY POPULATION:
 ---------------------------
 """
         
-        for city, count in city_counts.items():
+        for city, count in sorted_cities:
             report += f"{city}: {count} individuals\n"
         
         report += f"""
@@ -95,11 +112,11 @@ DETAILED AGE GROUP ANALYSIS:
         
         # Detailed age group analysis
         age_groups = {
-            'Children (0-15)': len(data[data['Age'] < 16]),
-            'New Voters (16-17)': len(data[(data['Age'] >= 16) & (data['Age'] < 18)]),
-            'Young Adults (18-25)': len(data[(data['Age'] >= 18) & (data['Age'] <= 25)]),
-            'Adults (26-65)': len(data[(data['Age'] > 25) & (data['Age'] <= 65)]),
-            'Seniors (65+)': len(data[data['Age'] > 65])
+            'Children (0-15)': len([p for p in data if p['Age'] < 16]),
+            'New Voters (16-17)': len([p for p in data if 16 <= p['Age'] < 18]),
+            'Young Adults (18-25)': len([p for p in data if 18 <= p['Age'] <= 25]),
+            'Adults (26-65)': len([p for p in data if 25 < p['Age'] <= 65]),
+            'Seniors (65+)': len([p for p in data if p['Age'] > 65])
         }
         
         for group, count in age_groups.items():
