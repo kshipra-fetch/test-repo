@@ -79,7 +79,7 @@ This analysis shows the impact of changing UK voting age from 18+ to 16+.
 """
         
         # Save the report
-        with open('/data/output/result.txt', 'w') as f:
+        with open('/data/outputs/result.txt', 'w') as f:
             f.write(report)
         
         print("Analysis completed successfully!")
@@ -90,7 +90,7 @@ This analysis shows the impact of changing UK voting age from 18+ to 16+.
         print(error_msg)
         
         # Save error report
-        with open('/data/output/error.txt', 'w') as f:
+        with open('/data/outputs/error.txt', 'w') as f:
             f.write(error_msg)
         
         return error_msg
